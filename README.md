@@ -153,6 +153,9 @@ networking-assistant/
 └── README.md
 ```
 
+The project documentation pack lives in [`docs/`](./docs/README.md) and mirrors the original
+eight-phase template in repo-native markdown form.
+
 ## Setup (without Docker)
 
 **Requirements:** Python 3.10+ (3.11+ recommended)
