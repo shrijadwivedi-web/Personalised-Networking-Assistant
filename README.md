@@ -153,8 +153,21 @@ networking-assistant/
 └── README.md
 ```
 
-The project documentation pack lives in [`docs/`](./docs/README.md) and mirrors the original
-eight-phase template in repo-native markdown form.
+## Documentation
+
+The documentation pack now lives in the template-style phase folders at the repo root:
+
+1. [1. Brainstorming & Ideation](./1.%20Brainstorming%20&%20Ideation/README.md)
+2. [2. Requirement Analysis](./2.%20Requirement%20Analysis/README.md)
+3. [3. Project Design Phase](./3.%20Project%20Design%20Phase/README.md)
+4. [4. Project Planning Phase](./4.%20Project%20Planning%20Phase/README.md)
+5. [5. Project Development Phase](./5.%20Project%20Development%20Phase/README.md)
+6. [6.Project Testing](./6.Project%20Testing/README.md)
+7. [7.Project Documentation](./7.Project%20Documentation/README.md)
+8. [8.Project Demonstration](./8.Project%20Demonstration/README.md)
+
+The older [`docs/`](./docs/README.md) folder remains as a compact index, but the numbered folders
+match the template you were given.
 
 ## Setup (without Docker)
 
