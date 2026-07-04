@@ -1,0 +1,12 @@
+# Minimal dependency set for the frontend container only.
+#
+# The Streamlit frontend never imports torch/transformers/sqlalchemy/etc --
+# it only talks to the backend over HTTP. Installing the full
+# requirements.txt (which includes multi-GB ML libraries needed only by
+# the backend) into the frontend image would be wasteful. This file lists
+# just what frontend/app.py actually imports.
+
+streamlit==1.41.1
+requests==2.32.3
+python-dotenv==1.0.1
+pandas==2.2.3

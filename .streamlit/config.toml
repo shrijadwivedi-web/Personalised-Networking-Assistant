@@ -1,0 +1,11 @@
+[theme]
+# A clean SaaS palette (Linear/Notion/Stripe-Dashboard-style): near-black
+# text on white, one restrained indigo accent for buttons/links, and a
+# very light gray for the sidebar/secondary surfaces. No gradients, no
+# secondary accent colors -- deliberately kept to a small, neutral set.
+base = "light"
+primaryColor = "#5c13ef"
+backgroundColor = "#030116"
+secondaryBackgroundColor = "#2d2d49"
+textColor = "#ffffff"
+font = "sans serif"

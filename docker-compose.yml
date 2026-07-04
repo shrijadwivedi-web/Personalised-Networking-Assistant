@@ -1,0 +1,47 @@
+# Orchestrates the backend (FastAPI) and frontend (Streamlit) containers.
+#
+# Usage:
+#   docker compose up --build
+#
+# Then visit:
+#   Frontend UI:    http://localhost:8501
+#   Backend API:    http://localhost:8000
+#   Swagger docs:   http://localhost:8000/docs
+#
+# A named volume persists the SQLite database across container restarts,
+# so user accounts/history/feedback survive `docker compose down` (but not
+# `docker compose down -v`, which removes volumes too).
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: networking-assistant-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=sqlite:////app/data/app.db
+      - SECRET_KEY=${SECRET_KEY:-INSECURE-DEV-ONLY-CHANGE-ME}
+      - ACCESS_TOKEN_EXPIRE_MINUTES=${ACCESS_TOKEN_EXPIRE_MINUTES:-60}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - GEMINI_MODEL=${GEMINI_MODEL:-gemini-2.5-flash}
+    volumes:
+      - app-data:/app/data
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: networking-assistant-frontend
+    ports:
+      - "8501:8501"
+    environment:
+      - BACKEND_URL=http://backend:8000
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  app-data:
