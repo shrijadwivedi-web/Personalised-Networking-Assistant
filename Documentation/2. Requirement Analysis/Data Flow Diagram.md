@@ -1,3 +1,6 @@
+<img width="1476" height="1298" alt="image" src="https://github.com/user-attachments/assets/5c4b9f55-28eb-4bfd-92a1-5475b4321f28" />
+
+
 # Data Flow Diagram
 
 ```mermaid
