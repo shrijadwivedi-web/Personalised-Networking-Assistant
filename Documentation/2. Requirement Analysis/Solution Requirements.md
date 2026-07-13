@@ -1,18 +1,3 @@
-# Solution Requirements
 
-## Functional Requirements
-
-- Register and log in users
-- Generate conversation starters from an event description
-- Support tone selection
-- Save profile information
-- Fact-check a topic
-- Store conversation history and feedback
-
-## Non-Functional Requirements
-
-- Keep per-user data isolated
-- Handle model or API failures gracefully
-- Support local and Docker-based development
-- Maintain readable, testable code
-
+<img width="1545" height="2000" alt="1" src="https://github.com/user-attachments/assets/c1753ed4-77e8-4097-948e-546116469616" />
+<img width="1545" height="2000" alt="2" src="https://github.com/user-attachments/assets/88b69c6d-f171-4381-8581-c86acd8bdf96" />
