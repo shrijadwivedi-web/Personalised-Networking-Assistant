@@ -1,13 +1,2 @@
-# Project Planning
-
-## Delivery Order
-
-1. Set up project structure
-2. Implement backend authentication
-3. Add database persistence
-4. Build conversation generation services
-5. Add fact checking and profile features
-6. Build the Streamlit UI
-7. Add tests and error handling
-8. Prepare Docker deployment and documentation
-
+<img width="1044" height="1408" alt="image" src="https://github.com/user-attachments/assets/61b8afc6-6006-49ba-99e6-6256cc55a817" />
+<img width="1018" height="1340" alt="image" src="https://github.com/user-attachments/assets/a2889972-2a8b-4249-909a-c78bb5439400" />
