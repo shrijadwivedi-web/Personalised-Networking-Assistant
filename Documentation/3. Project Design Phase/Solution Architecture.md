@@ -1,5 +1,6 @@
 <img width="1545" height="2000" alt="1" src="https://github.com/user-attachments/assets/45cf631a-73d9-477d-8baa-c83aae2188ef" />
-![Uploading 2.png…]()
+<img width="1545" height="2000" alt="2" src="https://github.com/user-attachments/assets/8a887fe7-4853-460b-8376-31bbd24dff39" />
+
 
 # Solution Architecture
 
