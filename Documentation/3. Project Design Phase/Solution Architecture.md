@@ -1,4 +1,6 @@
 <img width="1545" height="2000" alt="1" src="https://github.com/user-attachments/assets/45cf631a-73d9-477d-8baa-c83aae2188ef" />
+![Uploading 2.png…]()
+
 # Solution Architecture
 
 ```mermaid
