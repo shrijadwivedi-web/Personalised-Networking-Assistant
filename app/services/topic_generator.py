@@ -48,15 +48,16 @@ logger = logging.getLogger("networking_assistant")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY") or None
 
 # Overridable via env var so a different Gemini model can be swapped in
-# without a code change -- e.g. a faster or higher-quality alternative as
-# new versions become available. gemini-2.5-flash is Google's fast,
-# cost-effective, generally-available (non-preview) model, which made it
-# the more practical default for a project meant to run out of the box
-# without needing to track preview-model churn.
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+# without a code change. The rolling Flash alias keeps the app on a supported,
+# fast model instead of pinning generation to a version that can be retired.
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-flash-latest")
 
-MAX_OUTPUT_TOKENS = 250
+# Current Gemini Flash models may use part of this allowance for internal
+# reasoning. A 250-token cap can therefore truncate the visible response
+# before all three one-sentence starters are emitted.
+MAX_OUTPUT_TOKENS = 2048
 GENERATION_TEMPERATURE = 0.8
+MAX_GENERATION_ATTEMPTS = 2
 
 VALID_TONES = ("formal", "casual", "witty")
 
@@ -166,6 +167,11 @@ def _parse_suggestions(generated_text: str) -> List[str]:
     return suggestions[:3]
 
 
+def _is_complete_suggestion(suggestion: str) -> bool:
+    """Reject visibly truncated output so it cannot count toward the three."""
+    return suggestion.rstrip().endswith(("?", ".", "!", '"', "'"))
+
+
 def generate_topics(
     themes: List[str],
     interests: List[str],
@@ -175,7 +181,7 @@ def generate_topics(
     networking_goal: Optional[str] = None,
 ) -> List[str]:
     """
-    Generate up to 3 conversation starter suggestions via the Gemini API
+    Generate exactly 3 conversation starter suggestions via the Gemini API
     (see GEMINI_MODEL).
 
     Args:
@@ -189,7 +195,7 @@ def generate_topics(
         networking_goal: Optional profile field, free text.
 
     Returns:
-        A list of up to 3 non-empty conversation starter strings.
+        A list of exactly 3 non-empty conversation starter strings.
 
     Raises:
         RuntimeError: if the request to the Gemini API fails for any
@@ -211,29 +217,42 @@ def generate_topics(
         networking_goal=networking_goal,
     )
 
-    try:
-        response = _client.models.generate_content(
-            model=GEMINI_MODEL,
-            contents=user_message,
-            config=types.GenerateContentConfig(
-                system_instruction=SYSTEM_INSTRUCTION,
-                max_output_tokens=MAX_OUTPUT_TOKENS,
-                temperature=GENERATION_TEMPERATURE,
-            ),
-        )
-    except APIError as exc:
-        # Covers invalid/missing key (401/403), rate limiting (429), and
-        # the model being temporarily unavailable (503) -- all surfaced
-        # with the same friendly 503 by app/main.py, since from the
-        # user's point of view this feature is just "not available right
-        # now" regardless of which of these caused it.
-        raise RuntimeError(
-            f"Conversation generation request to Gemini failed: {exc}"
-        ) from exc
-    except Exception as exc:  # noqa: BLE001 - network/timeout/anything else
-        raise RuntimeError(
-            f"Conversation generation request failed unexpectedly: {exc}"
-        ) from exc
+    suggestions: List[str] = []
+    for attempt in range(MAX_GENERATION_ATTEMPTS):
+        retry_instruction = ""
+        if attempt:
+            retry_instruction = (
+                " Your previous response did not contain all three complete items. "
+                "Return exactly three complete, separately numbered starters now."
+            )
+        try:
+            response = _client.models.generate_content(
+                model=GEMINI_MODEL,
+                contents=user_message + retry_instruction,
+                config=types.GenerateContentConfig(
+                    system_instruction=SYSTEM_INSTRUCTION,
+                    max_output_tokens=MAX_OUTPUT_TOKENS,
+                    temperature=GENERATION_TEMPERATURE,
+                ),
+            )
+        except APIError as exc:
+            raise RuntimeError(
+                f"Conversation generation request to Gemini failed: {exc}"
+            ) from exc
+        except Exception as exc:  # noqa: BLE001 - network/timeout/anything else
+            raise RuntimeError(
+                f"Conversation generation request failed unexpectedly: {exc}"
+            ) from exc
 
-    generated_text = response.text or ""
-    return _parse_suggestions(generated_text)
+        for suggestion in _parse_suggestions(response.text or ""):
+            if not _is_complete_suggestion(suggestion):
+                continue
+            if suggestion not in suggestions:
+                suggestions.append(suggestion)
+            if len(suggestions) == 3:
+                return suggestions
+
+    raise RuntimeError(
+        "Conversation generation returned fewer than three complete starters "
+        f"after {MAX_GENERATION_ATTEMPTS} attempts."
+    )

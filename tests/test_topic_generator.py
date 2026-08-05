@@ -61,9 +61,12 @@ def test_returns_at_most_three_suggestions_even_if_model_returns_more(mock_gener
 
 @patch("app.services.topic_generator._client.models.generate_content")
 def test_suggestions_are_non_empty_strings(mock_generate_content):
-    mock_generate_content.return_value = _mock_response(
-        "1. What's exciting to you about this space?\n2. Have you been before?"
-    )
+    mock_generate_content.side_effect = [
+        _mock_response(
+            "1. What's exciting to you about this space?\n2. Have you been before?"
+        ),
+        _mock_response("1. What project are you most excited about right now?"),
+    ]
 
     result = generate_topics(["AI", "sustainability"], ["climate change"])
     for suggestion in result:
@@ -73,7 +76,11 @@ def test_suggestions_are_non_empty_strings(mock_generate_content):
 
 @patch("app.services.topic_generator._client.models.generate_content")
 def test_handles_empty_themes_and_interests_gracefully(mock_generate_content):
-    mock_generate_content.return_value = _mock_response("1. What brings you here today?")
+    mock_generate_content.return_value = _mock_response(
+        "1. What brings you here today?\n"
+        "2. What has been your favorite session?\n"
+        "3. Who were you hoping to meet?"
+    )
 
     result = generate_topics([], [])
     assert isinstance(result, list)
@@ -81,7 +88,11 @@ def test_handles_empty_themes_and_interests_gracefully(mock_generate_content):
 
 @patch("app.services.topic_generator._client.models.generate_content")
 def test_invalid_tone_falls_back_to_casual_without_raising(mock_generate_content):
-    mock_generate_content.return_value = _mock_response("1. What brings you here today?")
+    mock_generate_content.return_value = _mock_response(
+        "1. What brings you here today?\n"
+        "2. What has caught your attention so far?\n"
+        "3. What are you working on right now?"
+    )
 
     # Should not raise even though "sarcastic" isn't a supported tone.
     result = generate_topics(["AI"], ["technology"], tone="sarcastic")
@@ -134,3 +145,48 @@ def test_parse_suggestions_prefers_list_items_over_preface_text():
         "2. What's your take on AI in this space?"
     )
     assert result == ["What brought you to this event?", "What's your take on AI in this space?"]
+
+
+@patch("app.services.topic_generator._client.models.generate_content")
+def test_retries_and_combines_unique_items_when_first_response_has_only_two(
+    mock_generate_content,
+):
+    mock_generate_content.side_effect = [
+        _mock_response("1. First starter?\n2. Second starter?"),
+        _mock_response("1. First starter?\n2. Third starter?\n3. Fourth starter?"),
+    ]
+
+    result = generate_topics(["AI"], ["Python"])
+
+    assert result == ["First starter?", "Second starter?", "Third starter?"]
+    assert mock_generate_content.call_count == 2
+
+
+@patch("app.services.topic_generator._client.models.generate_content")
+def test_raises_if_two_attempts_still_cannot_produce_three_items(mock_generate_content):
+    mock_generate_content.return_value = _mock_response("1. Only one starter?")
+
+    with pytest.raises(RuntimeError, match="fewer than three"):
+        generate_topics(["AI"], ["Python"])
+
+    assert mock_generate_content.call_count == 2
+
+
+@patch("app.services.topic_generator._client.models.generate_content")
+def test_truncated_line_does_not_count_as_a_complete_starter(mock_generate_content):
+    mock_generate_content.side_effect = [
+        _mock_response(
+            "1. First complete starter?\n"
+            "2. Second complete starter?\n"
+            "3. This sentence was cut off in the middle of"
+        ),
+        _mock_response("1. Third complete starter?"),
+    ]
+
+    result = generate_topics(["AI"], ["Python"])
+
+    assert result == [
+        "First complete starter?",
+        "Second complete starter?",
+        "Third complete starter?",
+    ]
